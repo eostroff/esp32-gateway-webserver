@@ -5,7 +5,7 @@ BinManager* ESPNowHandler::bm = nullptr;
 void ESPNowHandler::begin(BinManager* manager) {
   bm = manager;
 
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_AP_STA);
   esp_now_init();
 
   esp_now_register_recv_cb(onReceive);
