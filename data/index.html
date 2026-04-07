@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AIM Central Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070a12;
+      --bg2: #0d1220;
+      --surface: #0f1729;
+      --surface-2: #131f36;
+      --border: #21314f;
+      --text: #e6edf8;
+      --muted: #8ea2c9;
+      --ok: #16c784;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --accent: #4cc9f0;
+      --mono: 'Azeret Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 400px at 15% -10%, #1b2c55 0%, transparent 55%),
+        radial-gradient(700px 300px at 90% -10%, #123a4f 0%, transparent 55%),
+        linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .header {
+      background: linear-gradient(180deg, #172646 0%, #121d35 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 10px 30px rgba(4, 8, 18, 0.4);
+    }
+
+    .brand h1 {
+      font-family: var(--mono);
+      font-size: 16px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .brand p {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      font-family: var(--mono);
+      background: #0d2942;
+      border: 1px solid #1e567a;
+      color: #8cd7ff;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .stats {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      animation: fadeUp 300ms ease both;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 1.4px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+    }
+
+    .stat .value {
+      font-size: 27px;
+      font-weight: 800;
+      margin-top: 6px;
+      font-family: var(--mono);
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 420px;
+    }
+
+    .panel h2 {
+      font-size: 15px;
+      margin-bottom: 10px;
+      letter-spacing: 0.4px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filters button {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 11px;
+      font-family: var(--mono);
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, color 120ms ease;
+    }
+
+    .filters button.active {
+      background: #1a2f53;
+      color: #d4e6ff;
+      border-color: #3f6aa8;
+    }
+
+    .filters button:active {
+      transform: scale(0.98);
+    }
+
+    .bins {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 10px;
+      max-height: 520px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .bin-card {
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--muted);
+      border-radius: 12px;
+      background: #111b31;
+      padding: 12px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      animation: fadeUp 300ms ease both;
+    }
+
+    .bin-card.online { border-left-color: var(--ok); }
+    .bin-card.offline { border-left-color: var(--bad); }
+    .bin-card.selected {
+      background: #182646;
+      border-color: #3f6aa8;
+      transform: translateY(-1px);
+    }
+
+    .bin-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .bin-id {
+      font-family: var(--mono);
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    .status-pill {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      border: 1px solid;
+    }
+
+    .status-pill.online {
+      color: var(--ok);
+      border-color: #1f7f5d;
+      background: #0f2a22;
+    }
+
+    .status-pill.offline {
+      color: var(--bad);
+      border-color: #7d2f35;
+      background: #2a1618;
+    }
+
+    .bin-name { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+
+    .kpis {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .kpis strong {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .detail-empty {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      margin-top: 20px;
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .detail-header h3 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .detail-header span {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .fields {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    label {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    input, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0a1222;
+      color: var(--text);
+      padding: 11px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #3f6aa8;
+      box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.12);
+    }
+
+    .actions {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .actions button {
+      cursor: pointer;
+      background: var(--surface-2);
+      transition: transform 120ms ease, background 120ms ease;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.7px;
+    }
+
+    .actions button.primary {
+      background: linear-gradient(180deg, #1f8ab0 0%, #176584 100%);
+      border-color: #2884a8;
+      color: #ecf8ff;
+    }
+
+    .actions button.warn {
+      background: #2f2411;
+      border-color: #725321;
+      color: #ffd08a;
+    }
+
+    .actions button.good {
+      background: #122c22;
+      border-color: #1f6147;
+      color: #7ef0bf;
+    }
+
+    .actions button:active { transform: scale(0.98); }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      background: #1a2f53;
+      border: 1px solid #3f6aa8;
+      color: #e9f4ff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease;
+    }
+
+    .toast.show { opacity: 1; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .content { grid-template-columns: 1fr; }
+      .bins { max-height: unset; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="brand">
+      <h1>AIM Central Inventory</h1>
+      <p>Live gateway dashboard for ESP32 bins</p>
+    </div>
+    <div class="chip" id="wsState">WS CONNECTING</div>
+  </header>
+
+  <section class="stats" id="stats"></section>
+
+  <section class="content">
+    <div class="panel">
+      <h2>Bins</h2>
+      <div class="filters">
+        <button class="active" data-filter="all" onclick="setFilter('all')">ALL</button>
+        <button data-filter="online" onclick="setFilter('online')">ONLINE</button>
+        <button data-filter="offline" onclick="setFilter('offline')">OFFLINE</button>
+        <button data-filter="low" onclick="setFilter('low')">LOW STOCK</button>
+      </div>
+      <div id="binsGrid" class="bins"></div>
+    </div>
+
+    <div class="panel" id="detailPanel">
+      <h2>Selected Bin</h2>
+      <div id="detailContent" class="detail-empty">Select a bin card to edit settings.</div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedBin = null;
+let bins = [];
+let currentFilter = "all";
+let reconnectTimer = null;
+
+let wsClient = null;
+
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+function formatWeight(v) {
+  const n = Number(v);
+  if (Number.isNaN(n)) return "--";
+  return n.toFixed(2);
+}
+
+function filteredBins() {
+  return bins.filter((b) => {
+    if (currentFilter === "online") return !!b.online;
+    if (currentFilter === "offline") return !b.online;
+    if (currentFilter === "low") return Number(b.stock) <= 2;
+    return true;
+  });
+}
+
+function renderStats() {
+  const online = bins.filter((b) => b.online).length;
+  const offline = bins.length - online;
+  const stockTotal = bins.reduce((sum, b) => sum + Number(b.stock || 0), 0);
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="label">TOTAL BINS</div><div class="value">${bins.length}</div></div>
+    <div class="stat"><div class="label">ONLINE</div><div class="value" style="color:var(--ok)">${online}</div></div>
+    <div class="stat"><div class="label">OFFLINE</div><div class="value" style="color:var(--bad)">${offline}</div></div>
+    <div class="stat"><div class="label">TOTAL STOCK</div><div class="value" style="color:var(--accent)">${stockTotal}</div></div>
+  `;
+}
+
+function renderGrid() {
+  const items = filteredBins();
+  const grid = document.getElementById("binsGrid");
+
+  if (items.length === 0) {
+    grid.innerHTML = `<div class="detail-empty">No bins in this filter.</div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map((b) => {
+    const selected = selectedBin === b.id ? "selected" : "";
+    const onlineClass = b.online ? "online" : "offline";
+    const statusLabel = b.online ? "ONLINE" : "OFFLINE";
+    const lowText = Number(b.stock) <= 2 ? " (LOW)" : "";
+
+    return `
+      <article class="bin-card ${onlineClass} ${selected}" onclick="selectBin(${b.id})">
+        <div class="bin-top">
+          <div class="bin-id">BIN ${String(b.id).padStart(2, "0")}</div>
+          <div class="status-pill ${onlineClass}">${statusLabel}</div>
+        </div>
+        <div class="bin-name">${b.name}</div>
+        <div class="kpis">
+          <div>Weight: <strong>${formatWeight(b.weight)} g</strong></div>
+          <div>Stock: <strong>${b.stock}${lowText}</strong></div>
+          <div>Per item: <strong>${formatWeight(b.weight_per_item)} g</strong></div>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderDetail() {
+  const detail = document.getElementById("detailContent");
+  const b = bins.find((x) => x.id === selectedBin);
+
+  if (!b) {
+    detail.className = "detail-empty";
+    detail.innerHTML = "Select a bin card to edit settings.";
+    return;
+  }
+
+  detail.className = "";
+  detail.innerHTML = `
+    <div class="detail-header">
+      <h3>${b.name}</h3>
+      <span>BIN ${String(b.id).padStart(2, "0")}</span>
+    </div>
+
+    <div class="kpis" style="margin-bottom:12px">
+      <div>Status: <strong style="color:${b.online ? "var(--ok)" : "var(--bad)"}">${b.online ? "ONLINE" : "OFFLINE"}</strong></div>
+      <div>Current weight: <strong>${formatWeight(b.weight)} g</strong></div>
+      <div>Estimated stock: <strong>${b.stock}</strong></div>
+    </div>
+
+    <div class="fields">
+      <label>Name</label>
+      <input id="name" value="${b.name}">
+
+      <label>Weight per Item (g)</label>
+      <input id="wpi" type="number" step="0.01" value="${formatWeight(b.weight_per_item)}">
+
+      <label>Known Weight for Calibration (g)</label>
+      <input id="knownWeight" type="number" step="0.01" placeholder="example: 200">
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="saveConfig()">SAVE CONFIG</button>
+      <button class="warn" onclick="tare()">SET TARE</button>
+      <button class="good" onclick="calibrate()">CALIBRATE</button>
+      <button onclick="autoWPI()">AUTO WEIGHT PER ITEM</button>
+    </div>
+  `;
+}
+
+function renderUI() {
+  renderStats();
+  renderGrid();
+  renderDetail();
+}
+
+function selectBin(id) {
+  selectedBin = id;
+  renderUI();
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll(".filters button").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+  renderGrid();
+}
+
+function setWsState(text, color) {
+  const el = document.getElementById("wsState");
+  el.textContent = text;
+  el.style.color = color;
+}
+
+function connectWebSocket() {
+  if (wsClient) wsClient.close();
+
+  setWsState("WS CONNECTING", "#8cd7ff");
+  wsClient = new WebSocket("ws://" + location.hostname + ":81/");
+
+  wsClient.onopen = () => {
+    setWsState("WS LIVE", "#7ef0bf");
+  };
+
+  wsClient.onmessage = (event) => {
+    bins = JSON.parse(event.data);
+    if (selectedBin !== null && !bins.some((x) => x.id === selectedBin)) {
+      selectedBin = null;
+    }
+    renderUI();
+  };
+
+  wsClient.onclose = () => {
+    setWsState("WS RETRYING", "#ffd08a");
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(connectWebSocket, 1500);
+  };
+
+  wsClient.onerror = () => {
+    wsClient.close();
+  };
+}
+
+async function saveConfig() {
+  if (selectedBin === null) return;
+
+  const nameEl = document.getElementById("name");
+  const wpiEl = document.getElementById("wpi");
+  if (!nameEl || !wpiEl) return;
+
+  try {
+    await fetch("/config", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        id: selectedBin,
+        name: nameEl.value,
+        weight_per_item: parseFloat(wpiEl.value)
+      })
+    });
+    showToast("Config saved");
+  } catch (e) {
+    showToast("Save failed");
+  }
+}
+
+async function tare() {
+  if (selectedBin === null) return;
+  try {
+    await fetch(`/tare?id=${selectedBin}`, { method: "POST" });
+    showToast("Tare sent");
+  } catch (e) {
+    showToast("Tare failed");
+  }
+}
+
+async function calibrate() {
+  if (selectedBin === null) return;
+
+  const knownEl = document.getElementById("knownWeight");
+  if (!knownEl) return;
+  const known = parseFloat(knownEl.value);
+  if (Number.isNaN(known) || known <= 0) {
+    showToast("Enter a valid known weight");
+    return;
+  }
+
+  try {
+    await fetch("/calibrate", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        id: selectedBin,
+        known_weight: known
+      })
+    });
+    showToast("Calibrated");
+  } catch (e) {
+    showToast("Calibration failed");
+  }
+}
+
+async function autoWPI() {
+  if (selectedBin === null) return;
+
+  const count = prompt("Number of items?");
+  if (!count) return;
+
+  try {
+    await fetch("/auto_wpi", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        id: selectedBin,
+        count: parseInt(count, 10)
+      })
+    });
+    showToast("Auto WPI updated");
+  } catch (e) {
+    showToast("Auto WPI failed");
+  }
+}
+
+connectWebSocket();
+</script>
+
+</body>
+</html>
