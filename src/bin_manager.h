@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <Preferences.h>
-#include <WebSockets.h>
+#include <WebSocketsServer.h>
 #include "config.h"
 
 extern WebSocketsServer ws;

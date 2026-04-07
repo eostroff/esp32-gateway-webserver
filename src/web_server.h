@@ -2,9 +2,11 @@
 #include <WebServer.h>
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
-#include "bin_manager.h"
+#include <WiFi.h>
 
-WebSocketsServer ws{81};
+class BinManager;
+
+extern WebSocketsServer ws;
 
 class WebHandler {
 public:

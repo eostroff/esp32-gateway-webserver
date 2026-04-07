@@ -22,7 +22,8 @@ void BinManager::updateWeight(uint8_t id, float raw) {
 
   computeStock(b);
 
-  ws.broadcastTXT(toJSON());
+  String json = toJSON();
+  ws.broadcastTXT(json);
 }
 
 void BinManager::computeStock(Bin &b) {

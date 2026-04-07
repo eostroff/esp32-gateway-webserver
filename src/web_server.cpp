@@ -1,4 +1,7 @@
 #include "web_server.h"
+#include "bin_manager.h"
+
+WebSocketsServer ws{81};
 
 void WebHandler::begin(BinManager* manager) {
   bm = manager;
@@ -31,7 +34,7 @@ void WebHandler::setupRoutes() {
   });
 
   server.on("/config", HTTP_POST, [this]() {
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
     deserializeJson(doc, server.arg("plain"));
 
     int id = doc["id"];
@@ -48,7 +51,7 @@ void WebHandler::setupRoutes() {
   });
 
   server.on("/calibrate", HTTP_POST, [this]() {
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
     deserializeJson(doc, server.arg("plain"));
 
     int id = doc["id"];
@@ -60,7 +63,7 @@ void WebHandler::setupRoutes() {
   });
 
   server.on("/auto_wpi", HTTP_POST, [this]() {
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
     deserializeJson(doc, server.arg("plain"));
 
     int id = doc["id"];
