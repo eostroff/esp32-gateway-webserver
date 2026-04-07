@@ -1,11 +1,13 @@
 #include "web_server.h"
 #include "bin_manager.h"
+#include <LittleFS.h>
 
 WebSocketsServer ws{81};
 
 void WebHandler::begin(BinManager* manager) {
   bm = manager;
 
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP("ESP32-Inventory", "12345678");
 
   setupRoutes();
@@ -22,6 +24,14 @@ void WebHandler::begin(BinManager* manager) {
 }
 
 void WebHandler::setupRoutes() {
+
+  if (LittleFS.begin()) {
+    server.serveStatic("/", LittleFS, "/index.html");
+  } else {
+    server.on("/", HTTP_GET, [this]() {
+      server.send(500, "text/plain", "LittleFS mount failed");
+    });
+  }
 
   server.on("/bins", HTTP_GET, [this]() {
     server.send(200, "application/json", bm->toJSON());
@@ -73,12 +83,12 @@ void WebHandler::setupRoutes() {
     server.send(200);
   });
 
-  // Serve UI
-  server.on("/", HTTP_GET, [this]() {
-    server.send(200, "text/html", "<h1>Upload UI here</h1>");
-  });
-
   server.onNotFound([this]() {
     server.send(404, "text/plain", "Not found");
   });
+}
+
+void WebHandler::loop() {
+  server.handleClient();
+  ws.loop();
 }

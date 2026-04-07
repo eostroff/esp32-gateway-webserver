@@ -11,6 +11,7 @@ extern WebSocketsServer ws;
 class WebHandler {
 public:
   void begin(BinManager* manager);
+  void loop();
 
 private:
   WebServer server{80};
