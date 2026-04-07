@@ -1,7 +1,10 @@
 #pragma once
 #include <Arduino.h>
 #include <Preferences.h>
+#include <WebSockets.h>
 #include "config.h"
+
+extern WebSocketsServer ws;
 
 struct Bin {
   uint8_t id;
@@ -26,6 +29,7 @@ public:
   void tare(uint8_t id, long raw);
   void calibrate(uint8_t id, float known_weight, long raw);
   void autoWPI(uint8_t id, int count);
+  void save(uint8_t id);
 
   String toJSON();
   Bin* getBin(uint8_t id);
@@ -36,5 +40,4 @@ private:
 
   void computeStock(Bin &b);
   void load();
-  void save(uint8_t id);
 };

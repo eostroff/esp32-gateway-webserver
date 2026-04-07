@@ -15,11 +15,14 @@ void BinManager::begin() {
 
 void BinManager::updateWeight(uint8_t id, float raw) {
   Bin &b = bins[id];
+
   b.raw_weight = raw;
   b.last_update = millis();
   b.online = true;
 
   computeStock(b);
+
+  ws.broadcastTXT(toJSON());
 }
 
 void BinManager::computeStock(Bin &b) {
